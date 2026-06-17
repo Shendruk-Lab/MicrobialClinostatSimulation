@@ -26,16 +26,16 @@ Object_initial_conditions/Ecoli.txt
 9.8
 
 # rotational diffusion coefficient [1/s] #
-0
+0.15
 
 # viscosity coefficient of medium at room temperature [Pa/s]  1e-3#
 1E-3
 
 # diffusion coefficient of medium at room temperature [m^2/s], 0 = no diffusion 2e-13#
-0
+2e-13
 
 # bacteriums tumbling rate [1/s] #
-0
+1
 
 # is centripetal force on? True = yes, False = no # 
 True
