@@ -10,41 +10,6 @@ import argparse
 
 # FUNCTIONS ###################################################################
 
-def to_bool(x):
-    '''
-    Convert string value of True and False to bool in config files for toggle 
-    centripetal force and boundaries. Catches spelling mistakes.
-
-    Parameters
-    ----------
-    x : STR
-        toggle indicator of parameter from config being on or off.
-
-    Raises
-    ------
-    ValueError
-        Spelling mistake present (input is not capital variation of True
-                                  or False).
-
-    Returns
-    -------
-    bool
-        Boolean True or False toggle for parameters in config file.
-    '''
-    
-    # remove whitespace and put all letters to lower case
-    value = x.strip().lower()
-
-    # return corresponding boolean
-    if value == "true":
-        return True
-    if value == "false":
-        return False
-    
-    # indicate possible spelling error
-    raise ValueError(f"Expected True or False, got {x!r}")
-
-
 @njit
 def rotate_xy(x, y, theta):
     '''
@@ -328,169 +293,6 @@ def simulate_single_bacterium(
 
     return traj
 
-
-# INPUT PARSE #################################################################
-
-# parser = argparse.ArgumentParser()
-
-
-# parser.add_argument("--config", 
-#                     required=True, 
-#                     help="Absolute path to config file")
-
-# parser.add_argument("--output",
-#                     required=True,
-#                     help="Absolute path to output file")
-
-# args = parser.parse_args()
-
-# print("Config path:", args.config)
-# print("Output folder:", args.output)
-
-# config_path = args.config
-# output_folder = args.output
-
-#python BacStroke_numba_test_single_bacterium.py --config configs/omega=0.txt --output results/run1
-
-# # load config #################################################################
-# config_path = 'test_config.txt'
-
-# config = f.read_config(config_path)
-
-# # get each parameter
-# dt = float(config[1])
-# total_time = float(config[2])
-# num_steps = int(round(total_time / dt))
-# dps = str(dt)[::-1].find('.')
-# #print(type(dps))
-
-# omega = float(config[3]) * 2*np.pi/60
-# R = float(config[4])
-# r = float(config[5])
-# H = float(config[6])
-# density = float(config[7])
-# g = float(config[8])
-# rot_diff = float(config[9])
-# viscosity = float(config[10])
-# diffusion = float(config[11])
-# tumbling_rate = int(config[12])
-# use_centripetal = to_bool(config[13])
-# use_boundaries = to_bool(config[14])
-
-# #print(use_centripetal, type(use_centripetal), use_boundaries, type(use_boundaries))
-
-# output_dt = float(config[15])
-# output_every = int(round(output_dt / dt))
-
-
-# # --- load IC ---
-# with open(config[0], "r") as f_ic:
-#     p = f_ic.readline().split()
-
-# radius = float(p[1])
-# pos0 = np.array([p[2], p[3], p[4]], dtype=np.float64)
-# swim_speed = float(p[5])
-# organism_density = float(p[6])
-
-# bm = (4/3)*np.pi*density*(radius**3)*((organism_density/density)-1)
-
-# # initial direction
-# swim_dir0 = f.initialise_swimming_direction()
-
-# print('Starting Simulation')
-
-# # print simulation parameters
-# sim_params = {
-#     "Timestep, dt [s]": dt,
-#     "Simulation duration [s]": total_time,
-#     "Output interval [s]": output_dt,
-#     "Omega [rad/s]": omega,
-#     "Outer clinostat radius, R [m]": R,
-#     "Inner clinostat radius, Rₒ [m]": r,
-#     "Clinostat length, H [m]": H,
-#     "Medium density [kg/m³]": density,
-#     "Gravitational acc., g [m/s²]": g,
-#     "Rot. diff. coef., D_R [1/s]": rot_diff,
-#     "Viscosity, η [Pa s]": viscosity,
-#     "Transl. diff. coef, D_T [m²/s]": diffusion,
-#     "Tumbling rate, k [1/s]": tumbling_rate,
-#     "Centripetal force status": use_centripetal,
-#     "Boundary condition status": use_boundaries,
-#     "Organism radius, r [m]": radius,
-#     "Swimming speed, v_s [m/s]": swim_speed,
-#     "Organism density, ρ_b [kg/m³]": organism_density,
-#     "Buoyant mass [kg]": bm,
-#     "Initial position [x, y, z]": pos0,
-#     "Initial orientation": swim_dir0,
-# }
-
-# # print formatting
-# print("\n=== Simulation Parameters ===") # len 29
-# for key, value in sim_params.items():
-#     print(f"{key:30s}: {value}") 
-# print("="*29)
-
-# traj = simulate_single_bacterium(
-#     pos0.copy(),
-#     swim_dir0.copy(),
-#     swim_speed,
-#     bm,
-#     radius,
-#     dt,
-#     num_steps,
-#     omega,
-#     g,
-#     viscosity,
-#     diffusion,
-#     rot_diff,
-#     tumbling_rate,
-#     dps,
-#     R,
-#     r,
-#     H,
-#     use_centripetal,
-#     use_boundaries,
-#     output_every,
-#     #seed=42
-# )
-
-# # save file
-# def save_runs(N, traj, output_folder):
-    
-#     if os.path.isdir(output_folder) == False:
-#         os.makedirs(output_folder)
-    
-#     for i in range(N-1):
-#         filepath = os.path.join(output_folder, f"run_{i+1}.csv")
-        
-#         np.savetxt(
-#             filepath,
-#             traj[:, i, :],
-#             delimiter=",")
-        
-    
-# def save_run(traj, output_folder):
-
-#     #print("Entered save_run")
-
-#     if not os.path.isdir(output_folder):
-#         os.makedirs(output_folder)
-
-#     filepath = os.path.join(output_folder, "run_1.csv")
-
-#     print("Saving to:", filepath)
-#     #print("Trajectory shape:", traj.shape)
-
-#     np.savetxt(filepath, traj, delimiter=",")
-
-#     print("Save complete")
-    
-# #np.save("numba_test_results".replace(".csv", ".npy"), traj)
-       
-# output_folder = 'Output'
-
-# save_run(traj, output_folder)
-
 # run simulation ##############################################################
 if __name__ == "__main__":
     
@@ -532,8 +334,8 @@ if __name__ == "__main__":
     viscosity = float(config[10])
     diffusion = float(config[11])
     tumbling_rate = int(config[12])
-    use_centripetal = to_bool(config[13])
-    use_boundaries = to_bool(config[14])
+    use_centripetal = f.to_bool(config[13])
+    use_boundaries = f.to_bool(config[14])
     
     #print(use_centripetal, type(use_centripetal), use_boundaries, type(use_boundaries))
     
