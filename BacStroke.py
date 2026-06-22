@@ -71,8 +71,8 @@ def random_unit_vector():
         random 3D unit vector on a unit sphere in cartesian coordinates.
 
     '''
-    theta = np.random.uniform(0.0, np.pi)
-    phi = np.random.uniform(0.0, 2.0*np.pi)
+    theta = np.random.uniform(0, np.pi)
+    phi = np.random.uniform(0, 2*np.pi)
 
     x = np.sin(phi)*np.cos(theta)
     y = np.sin(phi)*np.sin(theta)
@@ -103,13 +103,13 @@ def tumble_probability(dt, tumbling_rate, dps):
     '''
     
     # generate random number 
-    rand = np.random.uniform(0.0, 1.0 - dt)
+    rand = np.random.uniform(0, 1 - dt)
     
     # round random number to same number of decimal places (dps) as dt
     rand = np.round(rand, dps)
 
     # threshold that allows bacterium to tumble 
-    tumble_prob = 1.0 - (tumbling_rate * dt)
+    tumble_prob = 1 - (tumbling_rate * dt)
     
     # determine if bacterium tumbles
     # if randomly generated number greater than or equal to theshold a tumble
@@ -142,19 +142,22 @@ def simulate_single_bacterium(
     use_boundaries, # are boundary conditions on?
     output_every, # data output interval [s]
     #seed
-):
-    #np.random.seed(seed)
+):  
 
+    # total velocity
     vel = np.zeros(3)
-    rot_vel = np.zeros(3)
-    swim_vel = np.zeros(3)
-    term_vel = np.zeros(3)
-    cent_vel = np.zeros(3)
+    
+    # velocity contributions to total velocity
+    rot_vel = np.zeros(3) # clinostat rotation
+    swim_vel = np.zeros(3) # swimming
+    term_vel = np.zeros(3) # gravity
+    cent_vel = np.zeros(3) # from centrifugal force
+    
+    # drag constants
+    drag = 6*np.pi*viscosity*radius
 
-    drag = 6.0*np.pi*radius
-
-    # terminal velocity
-    VTy = bm*g/(viscosity*drag)
+    # terminal velocity, stays constant, only in y direction
+    VTy = bm*g/drag
     term_vel[1] = -VTy
 
     # output sizing
@@ -181,60 +184,91 @@ def simulate_single_bacterium(
         
         rot_vel[0] = (x_rot-x)/dt
         rot_vel[1] = (y_rot-y)/dt
-        rot_vel[2] = 0.0
+        rot_vel[2] = 0 # no movement in x for rotation
 
         # -------------------
         # centripetal force
         # -------------------
+        
+        # centripetal force is turned on
         if use_centripetal:
             cent_vel[0] = omega*omega*x
             cent_vel[1] = omega*omega*y
-            cent_vel[2] = 0.0
-
+            cent_vel[2] = 0
+        
+        # centripetal force is turned off
         else:
-            cent_vel[0] = 0.0
-            cent_vel[1] = 0.0
-            cent_vel[2] = 0.0
+            cent_vel[0] = 0
+            cent_vel[1] = 0
+            cent_vel[2] = 0
 
         # -------------------
         # tumbling and rotational diffusion
         # -------------------
+        
+        # generate 0 (no tumble) or 1 (bacterium tumbles) based on the number
+        # of tumbles per second in the config file
         tumble = tumble_probability(dt, tumbling_rate, dps)
 
+        # bacterium tumbles, direction changes
         if tumble == 1:
             new_dir = random_unit_vector()
             norm = np.sqrt(np.dot(new_dir, new_dir))
             swim_dir[:] = new_dir/norm
-
+        
+        # bacterium doesnt tumble and swimming dictates contribution to 
+        # velocity
         else:
+            
+            # xyz components of current swimming direction unit vector
             ex = swim_dir[0]
             ey = swim_dir[1]
+            #ez = swim_dir[2]
 
-            rotation = np.array([-ey*omega, ex*omega, 0.0])
-
-            coeff = np.sqrt((2.0*rot_diff_coeff)/dt)
-            noise = np.random.normal(0.0, 1.0, 3)
-
+            '''
+            Defining the rate of change of the swimming unit vector
+            
+            Rate of change of swimming direction:
+            de/dt = ω × e + sqrt(2Dr/Δt)(I - eeᵀ)ξ(t)
+            
+            rotation term = ω × e
+            rot diffusion term = sqrt(2Dr/Δt)(I - eeᵀ)ξ(t)
+            '''
+        
+            # rotation term in rate of change of swimming direction
+            rotation = np.array([-ey*omega, ex*omega, 0])
+            
+            # rotational diffusion term
+            coeff = np.sqrt((2*rot_diff_coeff)/dt) # coefficient on second term of rate of change vector
+            noise = np.random.normal(0, 1, size = 3)  # random Gaussian noise
+            
+            # outer product eeᵀ
             outer = np.empty((3, 3))
             outer[0, :] = swim_dir[0]*swim_dir
             outer[1, :] = swim_dir[1]*swim_dir
             outer[2, :] = swim_dir[2]*swim_dir
-
+            
+            # project noise perpendicular to the current swimming dir
+            # i.e. rot diffusion changes orientation but not its magnitude
             diffusion_term = coeff*((np.eye(3) - outer)@noise)
-
+            
+            # total rate of change of swimming direction
             dedt = rotation + diffusion_term
+            
             new_dir = swim_dir + dedt*dt
-
+            
+            # normalise
             norm = np.sqrt(np.dot(new_dir, new_dir))
             swim_dir[:] = new_dir/norm
-
+        
+        # new swimming direction but same magnitude
         swim_vel[:] = swim_speed*swim_dir
 
         # -------------------
         # translational diffusion
         # -------------------
-        noise = np.random.normal(0.0, 1.0, 3)
-        diffusion = noise * np.sqrt(2.0*diffusion_coeff/dt)
+        noise = np.random.normal(0, 1, size = 3) # random Gaussian noise
+        diffusion = noise * np.sqrt(2*diffusion_coeff/dt)
 
         # -------------------
         # total velocity
@@ -246,7 +280,7 @@ def simulate_single_bacterium(
         #     vel[1] += omega * omega * pos[1] * dt
         
         if use_centripetal:
-            coeff = bm / (6.0*np.pi*viscosity*radius)
+            coeff = bm / (6*np.pi*viscosity*radius)
             vel[0] += coeff*pos[0]*omega**2
             vel[1] += coeff*pos[1]*omega**2
 
@@ -282,13 +316,16 @@ def simulate_single_bacterium(
         # -------------------
         # save current position and time
         # -------------------
+        
+        # only save if time aligns with output time interval
         if t % output_every == 0:
             traj[save_idx, 0] = pos[0]
             traj[save_idx, 1] = pos[1]
             traj[save_idx, 2] = pos[2]
             traj[save_idx, 3] = time
             save_idx += 1
-
+            
+        # move onto next timestep
         time += dt
 
     return traj

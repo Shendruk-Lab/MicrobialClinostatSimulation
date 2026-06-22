@@ -74,7 +74,26 @@ def initialise_swimming_direction():
 
 # not used
 def sample_from_hollow_cylinder(radius_inner, radius_outer, height):
-    
+    '''
+    Generate random [x, y, z] coordinates from a hollow cylinder with 
+    outer radius 'radius_outer', inner radius 'radius_inner' and length 
+    'height'.
+ 
+    Parameters
+    ----------
+    radius_inner : float
+        inner radius of hollow cylinder.
+    radius_outer : float
+        outer radius of hollow cylinder.
+    height : float
+        length of cylinder.
+
+    Returns
+    -------
+    numpy array size 3
+        random coordinates within the hollow cylinder.
+
+    '''
     u = np.random.uniform(radius_inner**2, radius_outer**2)
     r = np.sqrt(u)
 
