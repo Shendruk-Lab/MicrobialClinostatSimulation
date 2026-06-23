@@ -78,7 +78,8 @@ The config file contains environmental parameters such as clinostat dimensions a
 
 See `test_config.txt` for an example.
 
-The initial conditions file contains the organism parameters; mass
+The initial conditions file contains the organism parameters, taking `Object_initial_conditions/Ecoli.txt` as an example:
+
 
 ## Output
 
